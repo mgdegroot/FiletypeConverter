@@ -1,0 +1,36 @@
+﻿<Window x:Class="FiletypeConverter.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:FiletypeConverter"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="539" Width="800">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="37*"/>
+            <ColumnDefinition Width="7*"/>
+        </Grid.ColumnDefinitions>
+        <Button Name="btnTest" Content="TEST" HorizontalAlignment="Left" Margin="388,295,0,0" VerticalAlignment="Top" Width="75" Click="btnTest_Click"/>
+        <TextBox Name="txtPath" HorizontalAlignment="Left" Height="23" Margin="263,292,0,0" TextWrapping="Wrap" Text="E:\\test\\test.msg" VerticalAlignment="Top" Width="120" />
+        <Label Name="lblRootDir" Content="Root" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="txtRootDir" HorizontalAlignment="Left" Height="23" Margin="67,10,0,0" TextWrapping="Wrap" Text="D:\NORDEN - export\17-0132-036-01" VerticalAlignment="Top" Width="555" MouseDoubleClick="txtRootDir_OnMouseDoubleClick"/>
+        <Button Name="btnWalkdir" Content="Walk" HorizontalAlignment="Left" Margin="66,183,0,0" VerticalAlignment="Top" Width="75" Click="btnWalkdir_Click"/>
+        <TextBox Name="txtWalkdirFilter" HorizontalAlignment="Left" Height="23" Margin="66,52,0,0" TextWrapping="Wrap" Text="*" VerticalAlignment="Top" Width="35"/>
+        <Label Name="lblWalkdirFilter" Content="Filter" HorizontalAlignment="Left" Margin="13,52,0,0" VerticalAlignment="Top"/>
+        <CheckBox Name="chkOutlookMsg" Content="Outlook MSG" IsChecked="True" HorizontalAlignment="Left" Margin="67,38,0,0" VerticalAlignment="Top"/>
+        <CheckBox Name="chkOutputTxt" Content="Output TXT" IsChecked="True" HorizontalAlignment="Left" Margin="109,58,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="txtOutputRootDir" HorizontalAlignment="Left" Height="23" Margin="66,127,0,0" TextWrapping="Wrap" Text="D:\NORDEN - export\17-0132-036-01_schaduw" VerticalAlignment="Top" Width="556" MouseDoubleClick="txtOutputRootDir_OnMouseDoubleClick" LostFocus="txtOutputRootDir_OnTextInput"/>
+        <Label Name="lblJournalFilename" Content="Journal" HorizontalAlignment="Left" Margin="13,153,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="txtJournalFilename" HorizontalAlignment="Left" Height="23" Margin="66,155,0,0" TextWrapping="Wrap" Text="D:\NORDEN - export\17-0132-036-01_schaduw" VerticalAlignment="Top" Width="467" MouseDoubleClick="txtJournalFilename_OnMouseDoubleClick"/>
+        <CheckBox Name="chkJournalInOutputRootDir" Content="In Output dir" HorizontalAlignment="Left" Margin="533,155,0,0" VerticalAlignment="Top" IsChecked="True" Checked="chkJournalInOutputRootDir_OnChecked" Unchecked="chkJournalInOutputRootDir_OnUnchecked"/>
+        <Label Name="lblOutputDir" Content="Output" HorizontalAlignment="Left" Margin="13,127,0,0" VerticalAlignment="Top"/>
+        <TextBox Name="txtDebug" HorizontalAlignment="Left" Height="178" Margin="468,320,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="312" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" ScrollViewer.CanContentScroll="True" Grid.ColumnSpan="2"/>
+        <TextBox Name="txtOutput" HorizontalAlignment="Left" Height="178" Margin="8,320,0,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" Width="455" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Visible" ScrollViewer.CanContentScroll="True"/>
+        <CheckBox Name="chkWord" Content="Word" HorizontalAlignment="Left" Margin="164,38,0,0" VerticalAlignment="Top"/>
+        <CheckBox Name="chkPowerpoint" Content="Powerpoint" HorizontalAlignment="Left" Margin="218,38,0,0" VerticalAlignment="Top"/>
+        <CheckBox Name="chkExcel" Content="Excel" HorizontalAlignment="Left" Margin="303,38,0,0" VerticalAlignment="Top"/>
+        <Label Name="lblIsRunning" Content="IDLE" Background="DimGray" Foreground="GreenYellow"  HorizontalAlignment="Left" Margin="146,180,0,0" VerticalAlignment="Top"/>
+        <Button Name="btnDummy" Content="DUMMY" HorizontalAlignment="Left" Margin="547,295,0,0" VerticalAlignment="Top" Width="75" Click="btnDummy_OnClick"/>
+    </Grid>
+</Window>
