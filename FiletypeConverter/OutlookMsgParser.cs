@@ -52,8 +52,7 @@ SENT ON: {SentOn}
 RECV ON: {ReceivedOn}
 MOD DATE: {LastModificationTime}
 ATTACHEMENTS: {AttachementNames_formatted}
-TEXT: {BodyText}
-HTML: {BodyHtml}";
+TEXT: {BodyText}";
 
         public string AsString => MsgAsString;
 

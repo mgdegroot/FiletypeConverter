@@ -24,5 +24,12 @@ namespace FiletypeConverter
             var outputFile = @"E:\test\convertPowerpointOutput.pdf";
             new Converter().Convert(inputFile, outputFile);
         }
+
+        public static void TestTxtToPdf()
+        {
+            string inputFile = @"E:\test\test.txt";
+            string outputFile = @"E:\test\convertTxt.pdf";
+            new Converter().Convert(inputFile, outputFile);
+        }
     }
 }
