@@ -8,6 +8,9 @@ using log4net;
 
 namespace FiletypeConverter
 {
+    // TODO: rename and refactor to reflect actual functionality, namely
+    // copy files without converting them.
+
     public class ImageFileConverter : FileConverter, IFileConverter
     {
         public ImageFileConverter(ILog log) : base(log)
@@ -23,7 +26,7 @@ namespace FiletypeConverter
 
             if (config.ProcessImages)
             {
-                updateLogAndJournal("Converting Outlook message files.", null);
+                updateLogAndJournal("Converting Image files.", null);
                 await processImageFiles(config.RootDir, config.OutputDir);
             }
         }
@@ -31,6 +34,7 @@ namespace FiletypeConverter
 
         private async Task processImageFiles(string rootPath, string outputPath)
         {
+            string[] extensionsToMatch = { "jpg","jpeg", "png", "gif", "bmp", "pdf"};
             await Task.Run(async () => {
                 FileAttributes attr = File.GetAttributes(rootPath);
 
@@ -40,8 +44,8 @@ namespace FiletypeConverter
                     {
                         outputPath += Path.DirectorySeparatorChar;
                     }
-
-                    List<string> matchingFiles = FileWalker.WalkDir(rootPath, "*.msg", true);
+                    
+                    List<string> matchingFiles = FileWalker.WalkDir(rootPath, extensionsToMatch, true);
                     foreach (var filename in matchingFiles)
                     {
                         string nwFilename = filename.Replace(rootPath, outputPath);
@@ -59,7 +63,7 @@ namespace FiletypeConverter
 
         private void processSingleImageFile(string inFile, string outFile)
         {
-            throw new NotImplementedException("Nog niet");
+            File.Copy(inFile, outFile, true);
         }
     }
 }

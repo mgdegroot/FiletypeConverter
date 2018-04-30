@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Logging;
-using OfficeConverter;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,7 +19,6 @@ namespace FiletypeConverter
     {
         public static readonly ILogger _logger;
         private static log4net.ILog log;
-        private Converter converter = new Converter();
         private readonly SynchronizationContext synchronizationContext;
 
         public MainWindow()
@@ -102,7 +100,7 @@ namespace FiletypeConverter
 
                 if (convertConfig.ProcessOutlookMsg)
                 {
-                    OutlookFileConverter outlookFileConverter = new OutlookFileConverter(log);
+                    FileConverter outlookFileConverter = new OutlookFileConverter(log);
                     outlookFileConverter.JournalEntryAdded += journalEntryAdded;
                     outlookFileConverter.ErrorEntryAdded += errorEntryAdded;
 
@@ -111,7 +109,7 @@ namespace FiletypeConverter
 
                 if (convertConfig.ProcessWord || convertConfig.ProcessPowerpoint || convertConfig.ProcessExcel)
                 {
-                    OfficeFileConverter officeFileConverter = new OfficeFileConverter(log);
+                    FileConverter officeFileConverter = new OfficeFileConverter(log);
                     officeFileConverter.JournalEntryAdded += journalEntryAdded;
                     officeFileConverter.ErrorEntryAdded += errorEntryAdded;
 
@@ -120,7 +118,11 @@ namespace FiletypeConverter
 
                 if (convertConfig.ProcessImages)
                 {
+                    FileConverter fileTransferrer = new ImageFileConverter(log);
+                    fileTransferrer.JournalEntryAdded += journalEntryAdded;
+                    fileTransferrer.ErrorEntryAdded += errorEntryAdded;
 
+                    fileTransferrer.processInBackgroundAsync(convertConfig);
                 }
             });
         }

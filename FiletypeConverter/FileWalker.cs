@@ -9,6 +9,18 @@ namespace FiletypeConverter
 {
     class FileWalker
     {
+        public static List<string> WalkDir(string rootDir, string[] patterns, bool recursive = true)
+        {
+            List<string> retVal = new List<string>();
+
+            foreach(string pattern in patterns)
+            {
+                retVal.AddRange(WalkDir(rootDir, pattern, recursive));
+            }
+
+            return retVal;
+        }
+
         public static List<string> WalkDir(string rootDir, string pattern="*", bool recursive = true)
         {
             List<string> foundFiles = new List<string>();
