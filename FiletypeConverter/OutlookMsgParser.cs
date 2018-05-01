@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 using EAGetMail;
+using log4net;
 using MsgReader.Mime;
 using MsgReader.Mime.Header;
 using MsgReader.Outlook;
@@ -58,12 +59,14 @@ TEXT: {BodyText}";
 
 
         private MessageHeader headers = null;
+        protected log4net.ILog log;
 
-        public OutlookMsgParser()
+        public OutlookMsgParser(ILog log)
         {
+            this.log = log;
         }
 
-        public OutlookMsgParser(string path):this()
+        public OutlookMsgParser(string path, ILog log) :this(log)
         {
             Path = path;
         }
@@ -123,6 +126,7 @@ TEXT: {BodyText}";
                 foreach (var msgAttachment in msg.Attachments)
                 {
                     MsgReader.Outlook.Storage.Attachment ss;
+                    
                     if (msgAttachment is MsgReader.Outlook.Storage.Attachment)
                     {
                         var attach = (MsgReader.Outlook.Storage.Attachment)msgAttachment;
@@ -134,27 +138,65 @@ TEXT: {BodyText}";
                         AttachementNames.Add(attach.FileName);
                     }
                     
+                    
                 }
+                //extractAndConvertAttachements(path);
 
 
-                
-
-//                msgAsText = $@"
-//FROM: {from}
-//SENT ON: {sentOn}
-//TO: {recipientsTo}
-//CC: {recipientsCC}
-//SUBJECT: {subject}
-//HTMLBODY: {htmlBody}
-//RTFBODY: {rtfBody}
-//TXTBODY: {textBody}
-//ATTN: {attachementNames}
-//CREATIONTIME: {creationTime}
-//RECV_ON: {receivedOn}
-//MOD_DATE: {lastModificationTime}";
+                //                msgAsText = $@"
+                //FROM: {from}
+                //SENT ON: {sentOn}
+                //TO: {recipientsTo}
+                //CC: {recipientsCC}
+                //SUBJECT: {subject}
+                //HTMLBODY: {htmlBody}
+                //RTFBODY: {rtfBody}
+                //TXTBODY: {textBody}
+                //ATTN: {attachementNames}
+                //CREATIONTIME: {creationTime}
+                //RECV_ON: {receivedOn}
+                //MOD_DATE: {lastModificationTime}";
             }
             return true;
         }
+
+        //public async void extractAndConvertAttachements(string origMsgPath, string destMsgPath)
+        //{
+        //    MsgReader.Reader reader = new MsgReader.Reader();
+
+        //    string msgFile = origMsgPath;
+        //    string attachementDestDir = destMsgPath + "_bijlages";
+
+        //    if (!Directory.Exists(attachementDestDir))
+        //    {
+        //        Directory.CreateDirectory(attachementDestDir);
+        //    }
+
+        //    string[] outputFiles = reader.ExtractToFolder(msgFile, attachementDestDir);
+
+        //    FileConverter.ConvertConfig convertConfig = new FileConverter.ConvertConfig()
+        //    {
+        //        ProcessOutlookMsg = true,
+        //        ProcessWord = true,
+        //        ProcessPowerpoint = true,
+        //        ProcessExcel = true,
+        //        ProcessImages = true,
+        //        RootDir = attachementDestDir,
+        //        OutputDir = attachementDestDir + "_pdf",
+        //        Filter = "*",
+        //    };
+
+
+        //    FileConverter outlookFileConverter = new OutlookFileConverter(log);
+        //    await outlookFileConverter.processInBackgroundAsync(convertConfig);
+
+        //    FileConverter officeFileConverter = new OfficeFileConverter(log);
+
+        //    await officeFileConverter.processInBackgroundAsync(convertConfig);
+
+        //    FileConverter fileTransferrer = new ImageFileConverter(log);
+        //    await fileTransferrer.processInBackgroundAsync(convertConfig);
+        //}
 
         private bool parseUsingEAMail(string path)
         {

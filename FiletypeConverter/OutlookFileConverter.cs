@@ -75,7 +75,7 @@ namespace FiletypeConverter
                 outFilePdf = outFile + ".pdf";
 
             updateLogAndJournal($"Original: {inFile}. New: {outFile}", null);
-            var parser = new OutlookMsgParser(inFile);
+            var parser = new OutlookMsgParser(inFile, log);
             if (parser.parse())
             {
                 string result = parser.MsgAsString;
@@ -86,11 +86,51 @@ namespace FiletypeConverter
                 {
                     File.Delete(outFileTxt);
                 }
+
+                //extractAndConvertAttachements(inFile, outFile);
             }
             else
             {
                 updateLogAndJournal(null, $"Failed to parse file {inFile}", true);
             }
+        }
+
+        public async void extractAndConvertAttachements(string origMsgPath, string destMsgPath)
+        {
+            MsgReader.Reader reader = new MsgReader.Reader();
+
+            string msgFile = origMsgPath;
+            string attachementDestDir = destMsgPath + "_bijlages";
+
+            if (!Directory.Exists(attachementDestDir))
+            {
+                Directory.CreateDirectory(attachementDestDir);
+            }
+
+            string[] outputFiles = reader.ExtractToFolder(msgFile, attachementDestDir);
+
+            FileConverter.ConvertConfig convertConfig = new FileConverter.ConvertConfig()
+            {
+                ProcessOutlookMsg = true,
+                ProcessWord = true,
+                ProcessPowerpoint = true,
+                ProcessExcel = true,
+                ProcessImages = true,
+                RootDir = attachementDestDir,
+                OutputDir = attachementDestDir + "_pdf",
+                Filter = "*",
+            };
+
+
+            FileConverter outlookFileConverter = new OutlookFileConverter(log);
+            await outlookFileConverter.processInBackgroundAsync(convertConfig);
+
+            FileConverter officeFileConverter = new OfficeFileConverter(log);
+
+            await officeFileConverter.processInBackgroundAsync(convertConfig);
+
+            FileConverter fileTransferrer = new ImageFileConverter(log);
+            await fileTransferrer.processInBackgroundAsync(convertConfig);
         }
     }
 

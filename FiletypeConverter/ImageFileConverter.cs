@@ -34,7 +34,7 @@ namespace FiletypeConverter
 
         private async Task processImageFiles(string rootPath, string outputPath)
         {
-            string[] extensionsToMatch = { "jpg","jpeg", "png", "gif", "bmp", "pdf"};
+            string[] extensionsToMatch = { "*.jpg","*.jpeg", "*.png", "*.gif", "*.bmp", "*.pdf" };
             await Task.Run(async () => {
                 FileAttributes attr = File.GetAttributes(rootPath);
 
@@ -63,7 +63,28 @@ namespace FiletypeConverter
 
         private void processSingleImageFile(string inFile, string outFile)
         {
-            File.Copy(inFile, outFile, true);
+            FileInfo nwFileInfo = new FileInfo(outFile);
+            try
+            {
+                if (!nwFileInfo.Exists)
+                {
+                    Directory.CreateDirectory(nwFileInfo.Directory.FullName);
+                }
+            }
+            catch(Exception ex)
+            {
+                log.Error($"Exception creating dirctory: {ex.Message}");
+            }
+
+            try
+            {
+                File.Copy(inFile, outFile, true);
+            }
+            catch(Exception ex)
+            {
+                log.Error($"Exception copying file {inFile} to {outFile}: {ex.Message}");
+
+            }
         }
     }
 }
