@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using static FiletypeConverter.FileConverter;
+using static FiletypeConverter.OutlookPstConverter;
 using Timer = System.Threading.Timer;
 
 namespace FiletypeConverter
@@ -85,6 +86,7 @@ namespace FiletypeConverter
                 ProcessPowerpoint = chkPowerpoint.IsChecked ?? false,
                 ProcessExcel = chkExcel.IsChecked ?? false,
                 ProcessImages = chkCopyImages.IsChecked ?? false,
+                ProcessOutlookPst = chkOutlookPst.IsChecked ?? false,
                 RootDir = txtRootDir.Text,
                 OutputDir = outputDir,
                 Filter = txtWalkdirFilter.Text
@@ -123,6 +125,15 @@ namespace FiletypeConverter
                     fileTransferrer.ErrorEntryAdded += errorEntryAdded;
 
                     fileTransferrer.processInBackgroundAsync(convertConfig);
+                }
+
+                if (convertConfig.ProcessOutlookPst)
+                {
+                    OutlookPstConverter pstConverter = new OutlookPstConverter(log);
+                    pstConverter.JournalEntryAdded += journalEntryAdded;
+                    pstConverter.ErrorEntryAdded += errorEntryAdded;
+
+                    pstConverter.processInBackgroundAsync(convertConfig);
                 }
             });
         }
@@ -276,7 +287,20 @@ namespace FiletypeConverter
 
         private void btnTest_Click(object sender, RoutedEventArgs e)
         {
-            Tester.TestTxtToPdf();
+            setJournalFilename(@"D:\test\test.log");
+            string path = txtPath.Text;
+
+            //Tester.TestTxtToPdf();
+            OutlookPstConverter outlookPstConverter = new OutlookPstConverter(path, log);
+            outlookPstConverter.parse(path);
+            string res = string.Empty;
+            foreach(ParsedMessage parsedMessage in outlookPstConverter.ParsedMessages)
+            {
+                res += parsedMessage.MsgAsString + "\r\n\r\n";
+            }
+
+            txtDebug.Text = res;
+
         }
 
 

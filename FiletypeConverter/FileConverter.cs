@@ -28,7 +28,7 @@ namespace FiletypeConverter
             public string RootDir { get; set; }
             public string OutputDir { get; set; }
             public string Filter { get; set; }
-            
+            public bool ProcessOutlookPst { get; set; }
         }
 
         public abstract Task processInBackgroundAsync(ConvertConfig config);

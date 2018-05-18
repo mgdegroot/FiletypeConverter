@@ -104,6 +104,9 @@
     <Reference Include="OfficeConverter">
       <HintPath>..\..\OfficeConverter\OfficeConverter\bin\Debug\OfficeConverter.dll</HintPath>
     </Reference>
+    <Reference Include="pst">
+      <HintPath>..\..\PST\pst\pst\bin\Debug\pst.dll</HintPath>
+    </Reference>
     <Reference Include="SautinSoft.Document, Version=3.3.3.26, Culture=neutral, PublicKeyToken=e759c76c7515592a, processorArchitecture=MSIL">
       <HintPath>..\packages\sautinsoft.document.3.3.3.26\lib\net461\SautinSoft.Document.dll</HintPath>
     </Reference>
@@ -164,6 +167,7 @@
     <Compile Include="ImageFileConverter.cs" />
     <Compile Include="OfficeFileConverter.cs" />
     <Compile Include="OutlookFileConverter.cs" />
+    <Compile Include="OutlookPstConverter.cs" />
     <Compile Include="Tester.cs" />
     <Compile Include="WordDocumentParser.cs" />
     <Page Include="MainWindow.xaml">

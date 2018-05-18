@@ -40,5 +40,6 @@
         <Label Content="Journal" Margin="8,268,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="48"/>
         <Button Name="btnPickFile" Content="PICK" HorizontalAlignment="Left" Margin="579,13,0,0" VerticalAlignment="Top" Width="30" Click="btnPickFile_OnClick"/>
         <CheckBox Name="chkCopyImages" Content="chkImages" HorizontalAlignment="Left" Margin="355,38,0,0" VerticalAlignment="Top"/>
+        <CheckBox Name="chkOutlookPst" Content="Outlook PST" HorizontalAlignment="Left" Margin="438,40,0,0" VerticalAlignment="Top"/>
     </Grid>
 </Window>
