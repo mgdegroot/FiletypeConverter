@@ -14,6 +14,9 @@ namespace FiletypeConverter.ParsedContent
         public List<string> AttachmentNames { get; set; } = new List<string>();
         public string Body { get; set; }
         public string FolderName { get; set; }
+        public DateTime CreationTime { get; set; }
+        public DateTime ModificationTime { get; set; }
+
         public override string ToString()
         {
             string recipients = String.Join<string>(",", Recipients);

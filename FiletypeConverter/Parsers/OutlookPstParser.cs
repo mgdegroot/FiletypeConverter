@@ -83,6 +83,8 @@ namespace FiletypeConverter.Parsers
             }
         }
 
+        private DateTime convertPtypTimeToDateTime(Int64 nrOf100NanoSecondTicks) => new DateTime(1601, 1, 1).AddTicks(nrOf100NanoSecondTicks);
+
         private void processSingleMessage(string folderName, Message inMessage)
         {
             //DirectoryInfo nwDirInfo = new DirectoryInfo(outDir);
@@ -100,7 +102,14 @@ namespace FiletypeConverter.Parsers
             {
                 FolderName = folderName,
             };
+            try
+            {
+                parsedMessage.CreationTime = convertPtypTimeToDateTime(inMessage.GetProperty(MAPIProperties.PidTagCreationTime).Value.Value.ToInt64());
+                parsedMessage.ModificationTime = convertPtypTimeToDateTime(inMessage.GetProperty(MAPIProperties.PidTagLastModificationTime).Value.Value.ToInt64());
 
+                //inMessage.GetProperty()
+            }
+            catch { }
 
             try
             {
