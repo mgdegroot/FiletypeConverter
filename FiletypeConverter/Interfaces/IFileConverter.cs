@@ -1,13 +1,17 @@
-﻿using System;
+﻿using OfficeConverter;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FiletypeConverter
+namespace FiletypeConverter.Interfaces
 {
     interface IFileConverter
     {
+        IOutputSupplier Output { get; set; }
+        ConvertTarget TargetFormat { get; set; }
+        IConverter Converter { get; set; }
         Task processInBackgroundAsync(FileConverter.ConvertConfig config);
     }
 }

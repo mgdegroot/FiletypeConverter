@@ -18,7 +18,6 @@ namespace FiletypeConverter
     /// </summary>
     public partial class MainWindow : Window
     {
-        public static readonly ILogger _logger;
         private static log4net.ILog log;
         private readonly SynchronizationContext synchronizationContext;
 
@@ -87,6 +86,7 @@ namespace FiletypeConverter
                 ProcessExcel = chkExcel.IsChecked ?? false,
                 ProcessImages = chkCopyImages.IsChecked ?? false,
                 ProcessOutlookPst = chkOutlookPst.IsChecked ?? false,
+                KeepIntermediateFiles = chkOutputTxt.IsChecked ?? false,
                 RootDir = txtRootDir.Text,
                 OutputDir = outputDir,
                 Filter = txtWalkdirFilter.Text
@@ -102,50 +102,50 @@ namespace FiletypeConverter
 
                 if (convertConfig.ProcessOutlookMsg)
                 {
-                    FileConverter outlookFileConverter = new OutlookFileConverter(log);
-                    outlookFileConverter.JournalEntryAdded += journalEntryAdded;
-                    outlookFileConverter.ErrorEntryAdded += errorEntryAdded;
+                    FileConverter outlookFileConverter = new OutlookFileConverter();
+                    outlookFileConverter.JournalAdded += journalEntryAdded;
+                    outlookFileConverter.ErrorAdded += errorEntryAdded;
 
-                    outlookFileConverter.processInBackgroundAsync(convertConfig);
+                    await outlookFileConverter.processInBackgroundAsync(convertConfig);
                 }
 
                 if (convertConfig.ProcessWord || convertConfig.ProcessPowerpoint || convertConfig.ProcessExcel)
                 {
-                    FileConverter officeFileConverter = new OfficeFileConverter(log);
-                    officeFileConverter.JournalEntryAdded += journalEntryAdded;
-                    officeFileConverter.ErrorEntryAdded += errorEntryAdded;
+                    FileConverter officeFileConverter = new OfficeFileConverter();
+                    officeFileConverter.JournalAdded += journalEntryAdded;
+                    officeFileConverter.ErrorAdded += errorEntryAdded;
 
-                    officeFileConverter.processInBackgroundAsync(convertConfig);
+                    await officeFileConverter.processInBackgroundAsync(convertConfig);
                 }
 
                 if (convertConfig.ProcessImages)
                 {
-                    FileConverter fileTransferrer = new ImageFileConverter(log);
-                    fileTransferrer.JournalEntryAdded += journalEntryAdded;
-                    fileTransferrer.ErrorEntryAdded += errorEntryAdded;
+                    FileConverter fileTransferrer = new ImageFileConverter();
+                    fileTransferrer.JournalAdded += journalEntryAdded;
+                    fileTransferrer.ErrorAdded += errorEntryAdded;
 
-                    fileTransferrer.processInBackgroundAsync(convertConfig);
+                    await fileTransferrer.processInBackgroundAsync(convertConfig);
                 }
 
                 if (convertConfig.ProcessOutlookPst)
                 {
-                    OutlookPstConverter pstConverter = new OutlookPstConverter(log);
-                    pstConverter.JournalEntryAdded += journalEntryAdded;
-                    pstConverter.ErrorEntryAdded += errorEntryAdded;
+                    OutlookPstConverter pstConverter = new OutlookPstConverter();
+                    pstConverter.JournalAdded += journalEntryAdded;
+                    pstConverter.ErrorAdded += errorEntryAdded;
 
-                    pstConverter.processInBackgroundAsync(convertConfig);
+                    await pstConverter.processInBackgroundAsync(convertConfig);
                 }
             });
         }
 
-        public void journalEntryAdded(object sender, EventArgs a)
+        public void journalEntryAdded(string message)
         {
-
+            logAndUpdateUI(message, null, false);
         }
 
-        public void errorEntryAdded(object sender, EventArgs a)
+        public void errorEntryAdded(string message)
         {
-
+            logAndUpdateUI(null, message, true);
         }
 
 
@@ -154,6 +154,7 @@ namespace FiletypeConverter
         {
             if (!string.IsNullOrEmpty(outputText))
             {
+                log.Info("journal: " + outputText);
                 synchronizationContext.Post(new SendOrPostCallback(o => { txtOutput.Text += (string)o + Environment.NewLine; txtOutput.ScrollToEnd();}),outputText);
             }
 
@@ -291,13 +292,17 @@ namespace FiletypeConverter
             string path = txtPath.Text;
 
             //Tester.TestTxtToPdf();
-            OutlookPstConverter outlookPstConverter = new OutlookPstConverter(path, log);
-            outlookPstConverter.parse(path);
-            string res = string.Empty;
-            foreach(ParsedMessage parsedMessage in outlookPstConverter.ParsedMessages)
+            OutlookPstConverter outlookPstConverter = new OutlookPstConverter()
             {
-                res += parsedMessage.MsgAsString + "\r\n\r\n";
-            }
+                Path = path,
+            };
+
+            //outlookPstConverter.parse(path);
+            string res = string.Empty;
+            //foreach(ParsedPstMessage parsedMessage in outlookPstConverter.ParsedMessages)
+            //{
+            //    res += parsedMessage.MsgAsString + "\r\n\r\n";
+            //}
 
             txtDebug.Text = res;
 

@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FiletypeConverter.Interfaces;
+using FiletypeConverter.Parsers;
 using log4net;
 using OfficeConverter;
 
@@ -11,18 +13,14 @@ namespace FiletypeConverter
 {
     public class OutlookFileConverter : FileConverter, IFileConverter
     {
-        private Converter converter = new Converter();
-
-
-        public bool KeepMsgTxtFiles { get; set; } = false;
-
-
-        public OutlookFileConverter(ILog log) : base(log)
+        public OutlookFileConverter()
         {
         }
 
         public override async Task processInBackgroundAsync(ConvertConfig config)
         {
+            KeepIntermediateFiles = config.KeepIntermediateFiles;
+
             if (!Directory.Exists(config.OutputDir))
             {
                 Directory.CreateDirectory(config.OutputDir);
@@ -30,7 +28,7 @@ namespace FiletypeConverter
 
             if (config.ProcessOutlookMsg)
             {
-                updateLogAndJournal("Converting Outlook message files.", null);
+                Output.AddJournalEntry("Converting Outlook message files.");
                 await processMsgFiles(config.RootDir, config.OutputDir);
             }
         }
@@ -42,9 +40,9 @@ namespace FiletypeConverter
 
                 if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
                 {
-                    if (!outputPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                    if (!outputPath.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
                     {
-                        outputPath += Path.DirectorySeparatorChar;
+                        outputPath += System.IO.Path.DirectorySeparatorChar;
                     }
 
                     List<string> matchingFiles = FileWalker.WalkDir(rootPath, "*.msg", true);
@@ -74,15 +72,15 @@ namespace FiletypeConverter
             string outFileTxt = outFile + ".txt",
                 outFilePdf = outFile + ".pdf";
 
-            updateLogAndJournal($"Original: {inFile}. New: {outFile}", null);
-            var parser = new OutlookMsgParser(inFile, log);
-            if (parser.parse())
+            Output.AddJournalEntry($"Original: {inFile}. New: {outFile}");
+            var parser = new OutlookMsgParser(inFile);
+            if (parser.Parse())
             {
-                string result = parser.MsgAsString;
+                string result = parser.ContentAsString;
                 File.WriteAllText(outFileTxt, result);
-                converter.Convert(outFileTxt, outFilePdf);
+                Converter.ConvertFromCom(outFileTxt, outFilePdf);
 
-                if (!KeepMsgTxtFiles)
+                if (!KeepIntermediateFiles)
                 {
                     File.Delete(outFileTxt);
                 }
@@ -91,7 +89,7 @@ namespace FiletypeConverter
             }
             else
             {
-                updateLogAndJournal(null, $"Failed to parse file {inFile}", true);
+                Output.AddLogEntry($"Failed to parse file {inFile}", true);
             }
         }
 
@@ -122,14 +120,14 @@ namespace FiletypeConverter
             };
 
 
-            FileConverter outlookFileConverter = new OutlookFileConverter(log);
+            FileConverter outlookFileConverter = new OutlookFileConverter();
             await outlookFileConverter.processInBackgroundAsync(convertConfig);
 
-            FileConverter officeFileConverter = new OfficeFileConverter(log);
+            FileConverter officeFileConverter = new OfficeFileConverter();
 
             await officeFileConverter.processInBackgroundAsync(convertConfig);
 
-            FileConverter fileTransferrer = new ImageFileConverter(log);
+            FileConverter fileTransferrer = new ImageFileConverter();
             await fileTransferrer.processInBackgroundAsync(convertConfig);
         }
     }

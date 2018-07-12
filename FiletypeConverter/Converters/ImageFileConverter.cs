@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using FiletypeConverter.Interfaces;
 using log4net;
 
 namespace FiletypeConverter
@@ -13,7 +14,7 @@ namespace FiletypeConverter
 
     public class ImageFileConverter : FileConverter, IFileConverter
     {
-        public ImageFileConverter(ILog log) : base(log)
+        public ImageFileConverter()
         {
         }
 
@@ -26,7 +27,7 @@ namespace FiletypeConverter
 
             if (config.ProcessImages)
             {
-                updateLogAndJournal("Converting Image files.", null);
+                Output.AddJournalEntry("Converting Image files.");
                 await processImageFiles(config.RootDir, config.OutputDir);
             }
         }
@@ -40,9 +41,9 @@ namespace FiletypeConverter
 
                 if ((attr & FileAttributes.Directory) == FileAttributes.Directory)
                 {
-                    if (!outputPath.EndsWith(Path.DirectorySeparatorChar.ToString()))
+                    if (!outputPath.EndsWith(System.IO.Path.DirectorySeparatorChar.ToString()))
                     {
-                        outputPath += Path.DirectorySeparatorChar;
+                        outputPath += System.IO.Path.DirectorySeparatorChar;
                     }
                     
                     List<string> matchingFiles = FileWalker.WalkDir(rootPath, extensionsToMatch, true);
@@ -73,7 +74,7 @@ namespace FiletypeConverter
             }
             catch(Exception ex)
             {
-                log.Error($"Exception creating dirctory: {ex.Message}");
+                Output.AddLogEntry($"Exception creating dirctory: {ex.Message}", true);
             }
 
             try
@@ -82,8 +83,7 @@ namespace FiletypeConverter
             }
             catch(Exception ex)
             {
-                log.Error($"Exception copying file {inFile} to {outFile}: {ex.Message}");
-
+                Output.AddLogEntry($"Exception copying file {inFile} to {outFile}: {ex.Message}", true);
             }
         }
     }

@@ -1,4 +1,5 @@
-﻿using log4net;
+﻿using FiletypeConverter.Interfaces;
+using log4net;
 using OfficeConverter;
 using System;
 using System.Collections.Generic;
@@ -12,9 +13,7 @@ namespace FiletypeConverter
     public class OfficeFileConverter : FileConverter, IFileConverter
     {
 
-        private Converter converter = new Converter();
-
-        public OfficeFileConverter(ILog log) : base(log)
+        public OfficeFileConverter()
         {
         }
 
@@ -27,19 +26,19 @@ namespace FiletypeConverter
 
             if (config.ProcessWord)
             {
-                updateLogAndJournal("Converting Word documents.", null);
+                Output.AddJournalEntry("Converting Word documents.");
                 await processOfficeFiles(config.RootDir, config.OutputDir, "*.doc?");
             }
 
             if (config.ProcessPowerpoint)
             {
-                updateLogAndJournal("Converting Powerpoint documents.", null);
+                Output.AddJournalEntry("Converting Powerpoint documents.");
                 await processOfficeFiles(config.RootDir, config.OutputDir, "*.ppt?");
             }
 
             if (config.ProcessExcel)
             {
-                updateLogAndJournal("Converting Excel documents.", null);
+                Output.AddJournalEntry("Converting Excel documents.");
                 await processOfficeFiles(config.RootDir, config.OutputDir, "*.xls?");
             }
         }
@@ -62,7 +61,7 @@ namespace FiletypeConverter
 
                     foreach (var filename in matchingFiles)
                     {
-                        updateLogAndJournal($"Found matching file: {filename}", null);
+                        Output.AddJournalEntry($"Found matching file: {filename}");
 
                         string nwFilename = filename.Replace(rootPath, outputPath) + ".pdf";
                         processSingleOfficeFile(filename, nwFilename);
@@ -70,7 +69,7 @@ namespace FiletypeConverter
                 }
                 else
                 {
-                    updateLogAndJournal($"Processing single file: {rootPath}", null);
+                    Output.AddJournalEntry($"Processing single file: {rootPath}");
                     string nwFilename = rootPath.Replace(rootPath, outputPath) + ".pdf";
                     processSingleOfficeFile(rootPath, nwFilename);
                 }
@@ -89,16 +88,16 @@ namespace FiletypeConverter
                 Directory.CreateDirectory(nwFileInfo.Directory.FullName);
             }
 
-            updateLogAndJournal($"Converting {filename} to {nwFilename}", null);
+            Output.AddJournalEntry($"Converting {filename} to {nwFilename}");
 
             try
             {
-                converter.Convert(filename, nwFilename);
+                Converter.ConvertFromCom(filename, nwFilename);
             }
             catch (Exception ex)
             {
 
-                updateLogAndJournal($"Conversion failed for file {filename}", $"ERROR: {filename}: {ex.Message}", true);
+                Output.AddJournalAndLog($"Conversion failed for file {filename}", $"ERROR: {filename}: {ex.Message}", true);
             }
         }
     }

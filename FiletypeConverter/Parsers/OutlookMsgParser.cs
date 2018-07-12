@@ -6,16 +6,16 @@ using System.Text;
 using System.Threading.Tasks;
 
 using EAGetMail;
+using FiletypeConverter.Parsers;
 using log4net;
 using MsgReader.Mime;
 using MsgReader.Mime.Header;
 using MsgReader.Outlook;
 
-namespace FiletypeConverter
+namespace FiletypeConverter.Parsers
 {
-    public class OutlookMsgParser
+    public class OutlookMsgParser : FileParser
     {
-        public string Path { get; private set; }
 
         public string From { get; private set; }
 
@@ -44,7 +44,7 @@ namespace FiletypeConverter
 
         public DateTime? LastModificationTime { get; private set; }
 
-        public string MsgAsString => $@"FROM: {From}
+        public override string ContentAsString => $@"FROM: {From}
 TO: {To_formatted}
 CC: {CC_formatted}
 SUBJECT: {Subject}
@@ -55,32 +55,29 @@ MOD DATE: {LastModificationTime}
 ATTACHEMENTS: {AttachementNames_formatted}
 TEXT: {BodyText}";
 
-        public string AsString => MsgAsString;
-
-
         private MessageHeader headers = null;
         protected log4net.ILog log;
 
-        public OutlookMsgParser(ILog log)
+        public OutlookMsgParser()
         {
-            this.log = log;
+            
         }
 
-        public OutlookMsgParser(string path, ILog log) :this(log)
+        public OutlookMsgParser(string path) :this()
         {
             Path = path;
         }
 
-        public bool parse()
+        public override bool Parse()
         {
             if (string.IsNullOrEmpty(Path))
             {
                 throw new ArgumentException("Path not set");
             }
-            return parse(Path);
+            return Parse(Path);
         }
 
-        public bool parse(string path)
+        public override bool Parse(string path)
         {
             return parseUsingMsgReader(path);
         }
