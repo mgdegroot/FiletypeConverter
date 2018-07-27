@@ -10,6 +10,16 @@ namespace FiletypeConverter.Utils
 {
     public class OutputSupplier : IOutputSupplier
     {
+        // TODO: refactor to comply to a creation pattern
+        public static IOutputSupplier GetDefaultInstance(OutputAdded journalAddedEvent, OutputAdded errorAddedEvent)
+        {
+            OutputSupplier outputSupplier = new OutputSupplier();
+            outputSupplier.JournalAdded += journalAddedEvent;
+            outputSupplier.ErrorAdded += errorAddedEvent;
+            return outputSupplier;
+                
+        }
+
         public ILog Log { get; set; } = LogManager.GetLogger(System.Reflection.MethodBase.GetCurrentMethod().DeclaringType);
 
         public List<string> Journal { get; } = new List<string>();

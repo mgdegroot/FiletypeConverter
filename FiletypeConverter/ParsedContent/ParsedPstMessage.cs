@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FiletypeConverter.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -6,7 +7,9 @@ using System.Threading.Tasks;
 
 namespace FiletypeConverter.ParsedContent
 {
-    public class ParsedPstMessage
+    
+
+    public class ParsedPstMessage : IParsedContent
     {
         public string Subject { get; set; }
         public string Sender { get; set; }
@@ -14,6 +17,7 @@ namespace FiletypeConverter.ParsedContent
         public List<string> AttachmentNames { get; set; } = new List<string>();
         public string Body { get; set; }
         public string FolderName { get; set; }
+        public string IdentifyingName => $"{Sender} - {Subject}";
         public DateTime CreationTime { get; set; }
         public DateTime ModificationTime { get; set; }
 

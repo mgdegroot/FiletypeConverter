@@ -14,7 +14,7 @@ namespace FiletypeConverter.Parsers
         {
         }
 
-        public abstract string ContentAsString { get; }
+        //public abstract string ContentAsString { get; }
 
         public string Path { get; set; }
         public List<string> Journal { get; private set; } = new List<string>();
@@ -25,7 +25,18 @@ namespace FiletypeConverter.Parsers
         public event OutputAdded ErrorAdded;
         public event OutputAdded JournalAdded;
 
-        public abstract bool Parse();
+        public IList<IParsedContent> ParsedContent { get; set; }
+
+        public virtual bool Parse()
+        {
+            if (string.IsNullOrEmpty(Path))
+            {
+                throw new ArgumentNullException("Path not set");
+            }
+
+            return Parse(Path);
+        }
+
         public abstract bool Parse(string path);
     }
 }

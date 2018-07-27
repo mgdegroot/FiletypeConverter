@@ -7,29 +7,26 @@ using System.Threading.Tasks;
 using FiletypeConverter.Interfaces;
 using log4net;
 
-namespace FiletypeConverter
+namespace FiletypeConverter.Converters
 {
     // TODO: rename and refactor to reflect actual functionality, namely
     // copy files without converting them.
 
-    public class ImageFileConverter : FileConverter, IFileConverter
+    public class ImageFileConverter : FileConverter
     {
-        public ImageFileConverter()
+        public ImageFileConverter(IFileParser fileParser, IOutputSupplier outputSupplier) : base(fileParser, outputSupplier)
         {
         }
 
-        public override async Task processInBackgroundAsync(ConvertConfig config)
+        public override async Task ProcessInBackgroundAsync(ConvertConfig config)
         {
             if (!Directory.Exists(config.OutputDir))
             {
                 Directory.CreateDirectory(config.OutputDir);
             }
 
-            if (config.ProcessImages)
-            {
-                Output.AddJournalEntry("Converting Image files.");
-                await processImageFiles(config.RootDir, config.OutputDir);
-            }
+            Output.AddJournalEntry("Converting Image files.");
+            await processImageFiles(config.RootDir, config.OutputDir);
         }
 
 

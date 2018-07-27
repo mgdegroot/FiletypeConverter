@@ -6,18 +6,19 @@ using System.Text;
 using System.Threading.Tasks;
 using FiletypeConverter.Interfaces;
 using FiletypeConverter.Parsers;
+using FiletypeConverter.Utils;
 using log4net;
 using OfficeConverter;
 
-namespace FiletypeConverter
+namespace FiletypeConverter.Converters
 {
-    public class OutlookFileConverter : FileConverter, IFileConverter
+    public class OutlookMsgConverter : FileConverter
     {
-        public OutlookFileConverter()
+        public OutlookMsgConverter(IFileParser fileParser, IOutputSupplier outputSupplier) : base(fileParser, outputSupplier)
         {
         }
 
-        public override async Task processInBackgroundAsync(ConvertConfig config)
+        public override async Task ProcessInBackgroundAsync(ConvertConfig config)
         {
             KeepIntermediateFiles = config.KeepIntermediateFiles;
 
@@ -26,11 +27,8 @@ namespace FiletypeConverter
                 Directory.CreateDirectory(config.OutputDir);
             }
 
-            if (config.ProcessOutlookMsg)
-            {
-                Output.AddJournalEntry("Converting Outlook message files.");
-                await processMsgFiles(config.RootDir, config.OutputDir);
-            }
+            Output.AddJournalEntry("Converting Outlook message files.");
+            await processMsgFiles(config.RootDir, config.OutputDir);
         }
 
         private async Task processMsgFiles(string rootPath, string outputPath)
@@ -45,7 +43,7 @@ namespace FiletypeConverter
                         outputPath += System.IO.Path.DirectorySeparatorChar;
                     }
 
-                    List<string> matchingFiles = FileWalker.WalkDir(rootPath, "*.msg", true);
+                    List<string> matchingFiles = FileWalker.WalkDir(rootPath, Util.FileExtensions[FileType.OUTLOOK_MSG], true);
                     foreach (var filename in matchingFiles)
                     {
                         string nwFilename = filename.Replace(rootPath, outputPath);
@@ -76,7 +74,8 @@ namespace FiletypeConverter
             var parser = new OutlookMsgParser(inFile);
             if (parser.Parse())
             {
-                string result = parser.ContentAsString;
+                IParsedContent parsedContent = parser.ParsedContent.Single<IParsedContent>();
+                string result = parsedContent.ContentAsString;
                 File.WriteAllText(outFileTxt, result);
                 Converter.ConvertFromCom(outFileTxt, outFilePdf);
 
@@ -109,27 +108,25 @@ namespace FiletypeConverter
 
             FileConverter.ConvertConfig convertConfig = new FileConverter.ConvertConfig()
             {
-                ProcessOutlookMsg = true,
-                ProcessWord = true,
-                ProcessPowerpoint = true,
-                ProcessExcel = true,
-                ProcessImages = true,
+                SourceFiles = FileType.OUTLOOK_MSG | FileType.WORD | FileType.POWERPOINT | FileType.EXCEL | FileType.IMAGES,
                 RootDir = attachementDestDir,
                 OutputDir = attachementDestDir + "_pdf",
                 Filter = "*",
             };
 
 
-            FileConverter outlookFileConverter = new OutlookFileConverter();
-            await outlookFileConverter.processInBackgroundAsync(convertConfig);
+            FileConverter outlookFileConverter = new OutlookMsgConverter(new OutlookMsgParser(), Output);
+            await outlookFileConverter.ProcessInBackgroundAsync(convertConfig);
 
-            FileConverter officeFileConverter = new OfficeFileConverter();
+            // TODO: refactor to enable dependency injection -->
+            FileConverter officeFileConverter = new OfficeFileConverter(new OfficeFileParser(), Output);
 
-            await officeFileConverter.processInBackgroundAsync(convertConfig);
+            await officeFileConverter.ProcessInBackgroundAsync(convertConfig);
 
-            FileConverter fileTransferrer = new ImageFileConverter();
-            await fileTransferrer.processInBackgroundAsync(convertConfig);
+            FileConverter fileTransferrer = new ImageFileConverter(new ImageFileParser(), Output);
+            await fileTransferrer.ProcessInBackgroundAsync(convertConfig);
         }
+
     }
 
 }

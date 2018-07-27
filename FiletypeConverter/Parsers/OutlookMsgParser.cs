@@ -6,6 +6,8 @@ using System.Text;
 using System.Threading.Tasks;
 
 using EAGetMail;
+using FiletypeConverter.Interfaces;
+using FiletypeConverter.ParsedContent;
 using FiletypeConverter.Parsers;
 using log4net;
 using MsgReader.Mime;
@@ -17,47 +19,6 @@ namespace FiletypeConverter.Parsers
     public class OutlookMsgParser : FileParser
     {
 
-        public string From { get; private set; }
-
-        public string To_formatted { get; private set; }
-        public List<string> To { get; private set; } = new List<string>();
-
-        public string CC_formatted { get; private set; }
-        public List<string> CC { get; private set; } = new List<string>();
-
-        public string Subject { get; private set; }
-
-        public string BodyText { get; private set; }
-
-        public string BodyHtml { get; private set; }
-
-        public string BodyRtf { get; private set; }
-
-        public string AttachementNames_formatted { get; private set; }
-        public List<string> AttachementNames { get; private set; } = new List<string>();
-
-        public Mail Mail { get; private set; }
-
-        public DateTime? CreationTime { get; private set; }
-        public DateTime? SentOn { get; private set; }
-        public DateTime? ReceivedOn { get; private set; }
-
-        public DateTime? LastModificationTime { get; private set; }
-
-        public override string ContentAsString => $@"FROM: {From}
-TO: {To_formatted}
-CC: {CC_formatted}
-SUBJECT: {Subject}
-CREATED: {CreationTime}
-SENT ON: {SentOn}
-RECV ON: {ReceivedOn}
-MOD DATE: {LastModificationTime}
-ATTACHEMENTS: {AttachementNames_formatted}
-TEXT: {BodyText}";
-
-        private MessageHeader headers = null;
-        protected log4net.ILog log;
-
         public OutlookMsgParser()
         {
             
@@ -66,15 +27,6 @@ TEXT: {BodyText}";
         public OutlookMsgParser(string path) :this()
         {
             Path = path;
-        }
-
-        public override bool Parse()
-        {
-            if (string.IsNullOrEmpty(Path))
-            {
-                throw new ArgumentException("Path not set");
-            }
-            return Parse(Path);
         }
 
         public override bool Parse(string path)
@@ -102,23 +54,25 @@ TEXT: {BodyText}";
 
             using (msg)
             {
-                From = msg.Sender.DisplayName + "<" + msg.Sender.Email + ">";
+                ParsedMsgMessage parsedMsgMessage = new ParsedMsgMessage();
                 
-                To_formatted = msg.GetEmailRecipients(Storage.Recipient.RecipientType.To, false, false);
-                CC_formatted = msg.GetEmailRecipients(Storage.Recipient.RecipientType.Cc, false, false);
-                Subject = msg.Subject;
-                BodyHtml = msg.BodyHtml;
-                BodyRtf = msg.BodyRtf;
-                BodyText = msg.BodyText;
-                
-                AttachementNames_formatted = msg.GetAttachmentNames();
-                
-                this.headers = msg.Headers;
+                parsedMsgMessage.Sender = msg.Sender.DisplayName + "<" + msg.Sender.Email + ">";
 
-                SentOn = msg.SentOn;
-                ReceivedOn = msg.ReceivedOn;
-                CreationTime = msg.CreationTime;
-                LastModificationTime = msg.LastModificationTime;
+                parsedMsgMessage.To_formatted = msg.GetEmailRecipients(Storage.Recipient.RecipientType.To, false, false);
+                parsedMsgMessage.CC_formatted = msg.GetEmailRecipients(Storage.Recipient.RecipientType.Cc, false, false);
+                parsedMsgMessage.Subject = msg.Subject;
+                parsedMsgMessage.BodyHtml = msg.BodyHtml;
+                parsedMsgMessage.BodyRtf = msg.BodyRtf;
+                parsedMsgMessage.BodyText = msg.BodyText;
+
+                parsedMsgMessage.AttachementNames_formatted = msg.GetAttachmentNames();
+                
+                //this.headers = msg.Headers;
+
+                parsedMsgMessage.SentOn = msg.SentOn;
+                parsedMsgMessage.ReceivedOn = msg.ReceivedOn;
+                parsedMsgMessage.CreationTime = msg.CreationTime;
+                parsedMsgMessage.LastModificationTime = msg.LastModificationTime;
 
                 foreach (var msgAttachment in msg.Attachments)
                 {
@@ -127,15 +81,13 @@ TEXT: {BodyText}";
                     if (msgAttachment is MsgReader.Outlook.Storage.Attachment)
                     {
                         var attach = (MsgReader.Outlook.Storage.Attachment)msgAttachment;
-                        AttachementNames.Add(attach.FileName);
+                        parsedMsgMessage.AttachementNames.Add(attach.FileName);
                     }
                     else if (msgAttachment is MsgReader.Outlook.Storage.Message)
                     {
                         var attach = (MsgReader.Outlook.Storage.Message) msgAttachment;
-                        AttachementNames.Add(attach.FileName);
+                        parsedMsgMessage.AttachementNames.Add(attach.FileName);
                     }
-                    
-                    
                 }
                 //extractAndConvertAttachements(path);
 
@@ -208,8 +160,10 @@ TEXT: {BodyText}";
                 throw new FileNotFoundException($"File {Path} not found.");
             }
 
+            ParsedMsgMessage parsedMsgMessage = new ParsedMsgMessage();
+
             Mail mail = new Mail("TryIt");
-            this.Mail = mail;
+            //parsedMsgMessage.Mail = mail;
 
             try
             {
@@ -220,29 +174,29 @@ TEXT: {BodyText}";
                 return false;
             }
 
-            From = mail.From.ToString();
-            To_formatted = "";
+            parsedMsgMessage.Sender = mail.From.ToString();
+            parsedMsgMessage.To_formatted = "";
 
             foreach (var mailAddress in mail.To)
             {
-                To.Add(mailAddress.ToString());
-                To_formatted += mailAddress.ToString() + "; ";
+                parsedMsgMessage.To.Add(mailAddress.ToString());
+                parsedMsgMessage.To_formatted += mailAddress.ToString() + "; ";
             }
 
             foreach (var mailAddress in mail.Cc)
             {
-                CC.Add(mailAddress.ToString());
-                CC_formatted += mailAddress.ToString() + "; ";
+                parsedMsgMessage.CC.Add(mailAddress.ToString());
+                parsedMsgMessage.CC_formatted += mailAddress.ToString() + "; ";
             }
 
-            Subject = mail.Subject;
-            BodyText = mail.TextBody;
-            BodyHtml = mail.HtmlBody;
+            parsedMsgMessage.Subject = mail.Subject;
+            parsedMsgMessage.BodyText = mail.TextBody;
+            parsedMsgMessage.BodyHtml = mail.HtmlBody;
 
             foreach (var mailAttachment in mail.Attachments)
             {
-                AttachementNames.Add(mailAttachment.Name);
-                AttachementNames_formatted += mailAttachment.Name + "; ";
+                parsedMsgMessage.AttachementNames.Add(mailAttachment.Name);
+                parsedMsgMessage.AttachementNames_formatted += mailAttachment.Name + "; ";
             }
 
             return true;

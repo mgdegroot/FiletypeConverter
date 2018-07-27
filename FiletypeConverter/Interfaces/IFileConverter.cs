@@ -1,4 +1,5 @@
-﻿using OfficeConverter;
+﻿using FiletypeConverter.Converters;
+using OfficeConverter;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,6 +13,6 @@ namespace FiletypeConverter.Interfaces
         IOutputSupplier Output { get; set; }
         ConvertTarget TargetFormat { get; set; }
         IConverter Converter { get; set; }
-        Task processInBackgroundAsync(FileConverter.ConvertConfig config);
+        Task ProcessInBackgroundAsync(FileConverter.ConvertConfig config);
     }
 }

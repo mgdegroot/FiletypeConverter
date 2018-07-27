@@ -10,20 +10,11 @@ using System.Threading.Tasks;
 
 namespace FiletypeConverter.Parsers
 {
-    public class OutlookPstParser : FileParser, IFileParser
+    public class OutlookPstParser : FileParser
     {
         public OutlookPstParser()
         {
 
-        }
-
-        public List<ParsedPstMessage> ParsedMessages { get; set; } = new List<ParsedPstMessage>();
-
-        public override string ContentAsString => throw new NotImplementedException();
-
-        public override bool Parse()
-        {
-            return Parse(Path);
         }
 
         public override bool Parse(string path)
@@ -44,9 +35,6 @@ namespace FiletypeConverter.Parsers
             return retVal;
         }
 
-
-        ///////////////////////////////////////////////////////////////////
-
         private bool processSingleOutlookPstFile(string path)
         {
             bool result = true;
@@ -66,7 +54,6 @@ namespace FiletypeConverter.Parsers
             Message[] messages = folder.GetMessages();
             string folderName = folder.GetProperty(MAPIProperties.PidTagDisplayName).Value.Value.ToUnicode();
 
-            //nwPath = nwPath + System.IO.Path.DirectorySeparatorChar.ToString() + folderName;
             Folder[] subfolders = folder.GetSubFolders();
 
             foreach (Message message in messages)
@@ -78,7 +65,6 @@ namespace FiletypeConverter.Parsers
             // recursively walk the hiearchy -->
             foreach (Folder subfolder in subfolders)
             {
-                //string subdirPath = nwPath + System.IO.Path.DirectorySeparatorChar.ToString() + folderName;
                 walkPstDir(subfolder);
             }
         }
@@ -87,17 +73,6 @@ namespace FiletypeConverter.Parsers
 
         private void processSingleMessage(string folderName, Message inMessage)
         {
-            //DirectoryInfo nwDirInfo = new DirectoryInfo(outDir);
-            ////FileInfo nwFileInfo = new FileInfo(outFile);
-            //if (!nwDirInfo.Exists)
-            //{
-            //    Directory.CreateDirectory(nwDirInfo.FullName);
-            //}
-
-
-            //updateLogAndJournal($"Original: {inFile}. New: {outFile}", null);
-
-
             ParsedPstMessage parsedMessage = new ParsedPstMessage()
             {
                 FolderName = folderName,
@@ -106,8 +81,6 @@ namespace FiletypeConverter.Parsers
             {
                 parsedMessage.CreationTime = convertPtypTimeToDateTime(inMessage.GetProperty(MAPIProperties.PidTagCreationTime).Value.Value.ToInt64());
                 parsedMessage.ModificationTime = convertPtypTimeToDateTime(inMessage.GetProperty(MAPIProperties.PidTagLastModificationTime).Value.Value.ToInt64());
-
-                //inMessage.GetProperty()
             }
             catch { }
 
@@ -170,7 +143,7 @@ namespace FiletypeConverter.Parsers
             //    updateLogAndJournal(null, "message.GetAttachments(): " + ex.Message, true);
             //}
 
-            ParsedMessages.Add(parsedMessage);
+            ParsedContent.Add(parsedMessage);
             //string filePart = $"{parsedMessage.Sender} - {parsedMessage.Subject}";
             //foreach (char invalidChar in System.IO.Path.GetInvalidFileNameChars())
             //{

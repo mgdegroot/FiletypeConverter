@@ -1,4 +1,5 @@
 ﻿using FiletypeConverter.Interfaces;
+using FiletypeConverter.Utils;
 using log4net;
 using OfficeConverter;
 using System;
@@ -8,42 +9,44 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace FiletypeConverter
+namespace FiletypeConverter.Converters
 {
     public class OfficeFileConverter : FileConverter, IFileConverter
     {
 
-        public OfficeFileConverter()
+        public OfficeFileConverter(IFileParser fileParser, IOutputSupplier outputSupplier) : base(fileParser, outputSupplier)
         {
+            
         }
 
-        public override async Task processInBackgroundAsync(ConvertConfig config)
+        public override async Task ProcessInBackgroundAsync(ConvertConfig config)
         {
             if (!Directory.Exists(config.OutputDir))
             {
                 Directory.CreateDirectory(config.OutputDir);
             }
 
-            if (config.ProcessWord)
+            List<string> filePatternsToProcess = new List<string>();
+
+            if ((config.SourceFiles | FileType.WORD) == FileType.WORD)
             {
-                Output.AddJournalEntry("Converting Word documents.");
-                await processOfficeFiles(config.RootDir, config.OutputDir, "*.doc?");
+                filePatternsToProcess.AddRange(Util.FileExtensions[FileType.WORD]);
             }
 
-            if (config.ProcessPowerpoint)
+            if ((config.SourceFiles | FileType.POWERPOINT) == FileType.POWERPOINT)
             {
-                Output.AddJournalEntry("Converting Powerpoint documents.");
-                await processOfficeFiles(config.RootDir, config.OutputDir, "*.ppt?");
+                filePatternsToProcess.AddRange(Util.FileExtensions[FileType.POWERPOINT]);
             }
 
-            if (config.ProcessExcel)
+            if ((config.SourceFiles | FileType.EXCEL) == FileType.EXCEL)
             {
-                Output.AddJournalEntry("Converting Excel documents.");
-                await processOfficeFiles(config.RootDir, config.OutputDir, "*.xls?");
+                filePatternsToProcess.AddRange(Util.FileExtensions[FileType.EXCEL]);
             }
+
+            await processOfficeFiles(config.RootDir, config.OutputDir, filePatternsToProcess.ToArray<string>());
         }
 
-        private async Task processOfficeFiles(string rootPath, string outputPath, string extension)
+        private async Task processOfficeFiles(string rootPath, string outputPath, string[] filePatterns)
         {
             // TODO: refactor so all background work is done in one thread instead of multiple async methods-->
             await Task.Run(async () =>
@@ -57,7 +60,7 @@ namespace FiletypeConverter
                         outputPath += System.IO.Path.DirectorySeparatorChar;
                     }
 
-                    List<string> matchingFiles = FileWalker.WalkDir(rootPath, extension, true);
+                    List<string> matchingFiles = FileWalker.WalkDir(rootPath, filePatterns, true);
 
                     foreach (var filename in matchingFiles)
                     {
@@ -80,6 +83,7 @@ namespace FiletypeConverter
 
         private void processSingleOfficeFile(string filename, string nwFilename)
         {
+            Output.AddJournalEntry($"Converting {filename} to {nwFilename}");
 
             FileInfo nwFileInfo = new FileInfo(nwFilename);
 
@@ -88,15 +92,14 @@ namespace FiletypeConverter
                 Directory.CreateDirectory(nwFileInfo.Directory.FullName);
             }
 
-            Output.AddJournalEntry($"Converting {filename} to {nwFilename}");
-
+            
             try
             {
+                // no parsing needed, convert directly -->
                 Converter.ConvertFromCom(filename, nwFilename);
             }
             catch (Exception ex)
             {
-
                 Output.AddJournalAndLog($"Conversion failed for file {filename}", $"ERROR: {filename}: {ex.Message}", true);
             }
         }

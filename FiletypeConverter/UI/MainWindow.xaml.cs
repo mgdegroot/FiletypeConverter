@@ -1,4 +1,8 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using FiletypeConverter.Converters;
+using FiletypeConverter.Interfaces;
+using FiletypeConverter.Parsers;
+using FiletypeConverter.Utils;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -8,8 +12,8 @@ using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
-using static FiletypeConverter.FileConverter;
-using static FiletypeConverter.OutlookPstConverter;
+using static FiletypeConverter.Converters.FileConverter;
+using static FiletypeConverter.Converters.OutlookPstConverter;
 using Timer = System.Threading.Timer;
 
 namespace FiletypeConverter
@@ -77,20 +81,25 @@ namespace FiletypeConverter
         private async Task startInBg()
         {
             var outputDir = txtOutputRootDir.Text;
-            
+
             ConvertConfig convertConfig = new ConvertConfig()
             {
-                ProcessOutlookMsg = chkOutlookMsg.IsChecked ?? false,
-                ProcessWord = chkWord.IsChecked ?? false,
-                ProcessPowerpoint = chkPowerpoint.IsChecked ?? false,
-                ProcessExcel = chkExcel.IsChecked ?? false,
-                ProcessImages = chkCopyImages.IsChecked ?? false,
-                ProcessOutlookPst = chkOutlookPst.IsChecked ?? false,
                 KeepIntermediateFiles = chkOutputTxt.IsChecked ?? false,
+                ChangeDateTimes = chkChangeDateTimes.IsChecked ?? false,
                 RootDir = txtRootDir.Text,
                 OutputDir = outputDir,
-                Filter = txtWalkdirFilter.Text
+                Filter = txtWalkdirFilter.Text,
+                NewCreatedTime = dpCreatedDT.Value,
+                NewModifiedTime = dpModifiedDT.Value,
             };
+            if (chkOutlookMsg.IsChecked ?? false) convertConfig.SourceFiles |= FileType.OUTLOOK_MSG;
+            if (chkWord.IsChecked ?? false) convertConfig.SourceFiles |= FileType.WORD;
+            if (chkPowerpoint.IsChecked ?? false) convertConfig.SourceFiles |= FileType.POWERPOINT;
+            if (chkExcel.IsChecked ?? false) convertConfig.SourceFiles |= FileType.EXCEL;
+            if (chkCopyImages.IsChecked ?? false) convertConfig.SourceFiles |= FileType.IMAGES;
+            if (chkOutlookPst.IsChecked ?? false) convertConfig.SourceFiles |= FileType.OUTLOOK_PST;
+
+            IOutputSupplier outputSupplier = OutputSupplier.GetDefaultInstance(journalEntryAdded, errorEntryAdded);
 
             await Task.Run(async () =>
             {
@@ -99,55 +108,60 @@ namespace FiletypeConverter
                     Directory.CreateDirectory(convertConfig.OutputDir);
                 }
 
+                
 
-                if (convertConfig.ProcessOutlookMsg)
+                if ((convertConfig.SourceFiles & FileType.OUTLOOK_MSG) == FileType.OUTLOOK_MSG)
                 {
-                    FileConverter outlookFileConverter = new OutlookFileConverter();
-                    outlookFileConverter.JournalAdded += journalEntryAdded;
-                    outlookFileConverter.ErrorAdded += errorEntryAdded;
+                    FileConverter outlookFileConverter = new OutlookMsgConverter(new OutlookMsgParser(), outputSupplier);
 
-                    await outlookFileConverter.processInBackgroundAsync(convertConfig);
+                    await outlookFileConverter.ProcessInBackgroundAsync(convertConfig);
                 }
 
-                if (convertConfig.ProcessWord || convertConfig.ProcessPowerpoint || convertConfig.ProcessExcel)
+                FileType officeFiles = FileType.WORD | FileType.POWERPOINT | FileType.EXCEL;
+                if ((convertConfig.SourceFiles & officeFiles) == (officeFiles))
                 {
-                    FileConverter officeFileConverter = new OfficeFileConverter();
-                    officeFileConverter.JournalAdded += journalEntryAdded;
-                    officeFileConverter.ErrorAdded += errorEntryAdded;
+                    FileConverter officeFileConverter = new OfficeFileConverter(new OfficeFileParser(), outputSupplier);
 
-                    await officeFileConverter.processInBackgroundAsync(convertConfig);
+                    await officeFileConverter.ProcessInBackgroundAsync(convertConfig);
                 }
 
-                if (convertConfig.ProcessImages)
+                if ((convertConfig.SourceFiles & FileType.IMAGES) == FileType.IMAGES)
                 {
-                    FileConverter fileTransferrer = new ImageFileConverter();
-                    fileTransferrer.JournalAdded += journalEntryAdded;
-                    fileTransferrer.ErrorAdded += errorEntryAdded;
+                    FileConverter fileTransferrer = new ImageFileConverter(new ImageFileParser(), outputSupplier);
 
-                    await fileTransferrer.processInBackgroundAsync(convertConfig);
+                    await fileTransferrer.ProcessInBackgroundAsync(convertConfig);
                 }
 
-                if (convertConfig.ProcessOutlookPst)
+                if ((convertConfig.SourceFiles & FileType.OUTLOOK_PST) == FileType.OUTLOOK_PST)
                 {
-                    OutlookPstConverter pstConverter = new OutlookPstConverter();
-                    pstConverter.JournalAdded += journalEntryAdded;
-                    pstConverter.ErrorAdded += errorEntryAdded;
+                    OutlookPstConverter pstConverter = new OutlookPstConverter(new OutlookPstParser(), outputSupplier);
 
-                    await pstConverter.processInBackgroundAsync(convertConfig);
+                    await pstConverter.ProcessInBackgroundAsync(convertConfig);
                 }
             });
+
+            if (convertConfig.ChangeDateTimes)
+            {
+                await Task.Run(async () =>
+                {
+                    FileConverter dateTimeConverter = new DateTimeConverter(new GeneralPurposeParser(), outputSupplier);
+
+                    await dateTimeConverter.ProcessInBackgroundAsync(convertConfig);
+                });
+            }
         }
+
 
         public void journalEntryAdded(string message)
         {
             logAndUpdateUI(message, null, false);
         }
 
+
         public void errorEntryAdded(string message)
         {
             logAndUpdateUI(null, message, true);
         }
-
 
 
         private void logAndUpdateUI(string outputText, string dbgText, bool isError = false)
@@ -160,7 +174,6 @@ namespace FiletypeConverter
 
             if (!string.IsNullOrEmpty(dbgText))
             {
-                
                 if (isError)
                 {
                     log.Error(dbgText);
@@ -172,7 +185,6 @@ namespace FiletypeConverter
 
                 synchronizationContext.Post(new SendOrPostCallback(o => { txtDebug.Text += (string)o + Environment.NewLine; txtDebug.ScrollToEnd();}), dbgText);
             }
-            
         }
 
 
@@ -291,23 +303,20 @@ namespace FiletypeConverter
             setJournalFilename(@"D:\test\test.log");
             string path = txtPath.Text;
 
-            //Tester.TestTxtToPdf();
-            OutlookPstConverter outlookPstConverter = new OutlookPstConverter()
-            {
-                Path = path,
-            };
-
-            //outlookPstConverter.parse(path);
             string res = string.Empty;
-            //foreach(ParsedPstMessage parsedMessage in outlookPstConverter.ParsedMessages)
-            //{
-            //    res += parsedMessage.MsgAsString + "\r\n\r\n";
-            //}
 
             txtDebug.Text = res;
 
         }
 
+        private void chkChangeDateTimes_Checked(object sender, RoutedEventArgs e)
+        {
+            grdChangeDateTimes.IsEnabled = true;
+        }
 
+        private void chkChangeDateTimes_Unchecked(object sender, RoutedEventArgs e)
+        {
+            grdChangeDateTimes.IsEnabled = false;
+        }
     }
 }
